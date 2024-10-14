@@ -8,11 +8,8 @@ import (
 
 func Run() {
 	db.Init()
-	defer func() {
-		if err := db.DB.Close(); err != nil {
-			return
-		}
-	}()
+
+	defer db.Pool.Close()
 
 	r := routes.NewRouter()
 

@@ -1,17 +1,19 @@
 package db
 
 import (
-	"database/sql"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"context"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
+	"time"
 )
 
-var DB *sql.DB
+var Pool *pgxpool.Pool
 
 func Init() {
 	var err error
 	dsn := "postgres://app:pass@localhost:5432/db"
-	DB, err = sql.Open("pgx", dsn)
+	connectCtx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	Pool, err = pgxpool.Connect(connectCtx, dsn)
 	if err != nil {
 		log.Println(err)
 		return
