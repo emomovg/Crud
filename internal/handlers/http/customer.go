@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"mycrudapp/internal/models"
 	"mycrudapp/internal/repo"
@@ -10,10 +9,16 @@ import (
 	"strconv"
 )
 
-var customerRepo = repo.CustomerRepository{}
+type CustomerHandler struct {
+	Repo *repo.CustomerRepository
+}
 
-func GetAll(w http.ResponseWriter, r *http.Request) {
-	customers, err := customerRepo.GetAll(r.Context())
+func NewCustomerHandler(repo *repo.CustomerRepository) *CustomerHandler {
+	return &CustomerHandler{Repo: repo}
+}
+
+func (h *CustomerHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	customers, err := h.Repo.GetAll(r.Context())
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -22,7 +27,7 @@ func GetAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customers)
 }
 
-func GetById(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
@@ -32,7 +37,7 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer, err := customerRepo.GetById(r.Context(), id)
+	customer, err := h.Repo.GetById(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -41,14 +46,14 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customer)
 }
 
-func Create(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var customer models.Customer
 	if err := json.NewDecoder(r.Body).Decode(&customer); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	customer, err := customerRepo.Create(r.Context(), customer)
+	customer, err := h.Repo.Create(r.Context(), customer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -57,14 +62,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customer)
 }
 
-func Update(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var customer models.Customer
 	if err := json.NewDecoder(r.Body).Decode(&customer); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	customer, err := customerRepo.Update(r.Context(), customer)
+	customer, err := h.Repo.Update(r.Context(), customer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -73,7 +78,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customer)
 }
 
-func Delete(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
@@ -83,7 +88,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = customerRepo.Delete(r.Context(), id)
+	err = h.Repo.Delete(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -92,8 +97,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func GetAllActivated(w http.ResponseWriter, r *http.Request) {
-	customers, err := customerRepo.GetAllActivated(r.Context())
+func (h *CustomerHandler) GetAllActivated(w http.ResponseWriter, r *http.Request) {
+	customers, err := h.Repo.GetAllActivated(r.Context())
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -102,9 +107,9 @@ func GetAllActivated(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customers)
 }
 
-func Activate(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	fmt.Println(vars)
+
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 
 	if err != nil {
@@ -112,7 +117,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = customerRepo.Activate(r.Context(), id)
+	err = h.Repo.Activate(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -121,7 +126,7 @@ func Activate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func Deactivate(w http.ResponseWriter, r *http.Request) {
+func (h *CustomerHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
@@ -131,7 +136,7 @@ func Deactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = customerRepo.Deactivate(r.Context(), id)
+	err = h.Repo.Deactivate(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

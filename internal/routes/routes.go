@@ -6,17 +6,24 @@ import (
 	"net/http"
 )
 
-func NewRouter() *mux.Router {
-	router := mux.NewRouter()
+type Router struct {
+	MuxRouter *mux.Router
+}
 
-	router.HandleFunc("/customers", customerHandlers.GetAll).Methods(http.MethodGet)
-	router.HandleFunc("/customers/{id:[0-9]+}", customerHandlers.GetById).Methods(http.MethodGet)
-	router.HandleFunc("/customers", customerHandlers.Create).Methods(http.MethodPost)
-	router.HandleFunc("/customers/{id:[0-9]+}", customerHandlers.Update).Methods(http.MethodPut)
-	router.HandleFunc("/customers/{id:[0-9]+}", customerHandlers.Delete).Methods(http.MethodDelete)
-	router.HandleFunc("/customers/{id:[0-9]+}/activate", customerHandlers.Activate).Methods(http.MethodPut)
-	router.HandleFunc("/customers/{id:[0-9]+}/deactivate", customerHandlers.Deactivate).Methods(http.MethodPut)
-	router.HandleFunc("/customers/getAllActivated", customerHandlers.GetAllActivated).Methods(http.MethodGet)
+func NewRouter() *Router {
+	return &Router{
+		MuxRouter: mux.NewRouter(),
+	}
+}
 
-	return router
+func (r *Router) RegisterRoutes(handler *customerHandlers.CustomerHandler) {
+
+	r.MuxRouter.HandleFunc("/customers", handler.GetAll).Methods(http.MethodGet)
+	r.MuxRouter.HandleFunc("/customers/{id:[0-9]+}", handler.GetById).Methods(http.MethodGet)
+	r.MuxRouter.HandleFunc("/customers", handler.Create).Methods(http.MethodPost)
+	r.MuxRouter.HandleFunc("/customers/{id:[0-9]+}", handler.Update).Methods(http.MethodPut)
+	r.MuxRouter.HandleFunc("/customers/{id:[0-9]+}", handler.Delete).Methods(http.MethodDelete)
+	r.MuxRouter.HandleFunc("/customers/{id:[0-9]+}/activate", handler.Activate).Methods(http.MethodPut)
+	r.MuxRouter.HandleFunc("/customers/{id:[0-9]+}/deactivate", handler.Deactivate).Methods(http.MethodPut)
+	r.MuxRouter.HandleFunc("/customers/getAllActivated", handler.GetAllActivated).Methods(http.MethodGet)
 }

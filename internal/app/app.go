@@ -2,19 +2,26 @@ package app
 
 import (
 	"mycrudapp/internal/db"
+	http2 "mycrudapp/internal/handlers/http"
+	"mycrudapp/internal/repo"
 	"mycrudapp/internal/routes"
 	"net/http"
 )
 
 func Run() {
-	db.Init()
+	pg, err := db.Init()
+	if err != nil {
+		return
+	}
 
-	defer db.Pool.Close()
+	defer pg.Pool.Close()
 
 	r := routes.NewRouter()
-
-	err := http.ListenAndServe(":8080", r)
-	if err != nil {
+	customerRepository := repo.NewCustomerRepository(pg.Pool)
+	customerHandler := http2.NewCustomerHandler(customerRepository)
+	r.RegisterRoutes(customerHandler)
+	errHttp := http.ListenAndServe(":8080", r.MuxRouter)
+	if errHttp != nil {
 		return
 	}
 

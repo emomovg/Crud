@@ -2,16 +2,24 @@ package repo
 
 import (
 	"context"
-	"mycrudapp/internal/db"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"mycrudapp/internal/models"
 )
 
-type CustomerRepository struct{}
+type CustomerRepository struct {
+	dbPool *pgxpool.Pool
+}
+
+func NewCustomerRepository(dbPool *pgxpool.Pool) *CustomerRepository {
+	return &CustomerRepository{
+		dbPool: dbPool,
+	}
+}
 
 func (c *CustomerRepository) GetById(ctx context.Context, id int64) (models.Customer, error) {
 	var customer models.Customer
 
-	err := db.Pool.QueryRow(ctx, "SELECT * FROM customers WHERE id = $1", id).Scan(
+	err := c.dbPool.QueryRow(ctx, "SELECT * FROM customers WHERE id = $1", id).Scan(
 		&customer.ID,
 		&customer.Name,
 		&customer.Phone,
@@ -25,7 +33,7 @@ func (c *CustomerRepository) GetById(ctx context.Context, id int64) (models.Cust
 func (c *CustomerRepository) GetAll(ctx context.Context) ([]models.Customer, error) {
 	var customers []models.Customer
 
-	rows, err := db.Pool.Query(ctx, "SELECT * FROM customers")
+	rows, err := c.dbPool.Query(ctx, "SELECT * FROM customers")
 
 	defer rows.Close()
 
@@ -55,21 +63,21 @@ func (c *CustomerRepository) GetAll(ctx context.Context) ([]models.Customer, err
 }
 
 func (c *CustomerRepository) Create(ctx context.Context, customer models.Customer) (models.Customer, error) {
-	err := db.Pool.QueryRow(ctx, "INSERT INTO customers (name, phone, active) VALUES ($1, $2, $3) RETURNING id, created",
+	err := c.dbPool.QueryRow(ctx, "INSERT INTO customers (name, phone, active) VALUES ($1, $2, $3) RETURNING id, created",
 		customer.Name, customer.Phone, customer.Active).Scan(&customer.ID, &customer.Created)
 
 	return customer, err
 }
 
 func (c *CustomerRepository) Update(ctx context.Context, customer models.Customer) (models.Customer, error) {
-	_, err := db.Pool.Exec(ctx, "UPDATE customers SET name = $1, phone = $2, active = $3 WHERE id = $4",
+	_, err := c.dbPool.Exec(ctx, "UPDATE customers SET name = $1, phone = $2, active = $3 WHERE id = $4",
 		customer.Name, customer.Phone, customer.Active, customer.ID)
 
 	return customer, err
 }
 
 func (c *CustomerRepository) Delete(ctx context.Context, id int64) error {
-	_, err := db.Pool.Exec(ctx, "DELETE FROM customers WHERE id = $1", id)
+	_, err := c.dbPool.Exec(ctx, "DELETE FROM customers WHERE id = $1", id)
 
 	return err
 }
@@ -77,7 +85,7 @@ func (c *CustomerRepository) Delete(ctx context.Context, id int64) error {
 func (c *CustomerRepository) GetAllActivated(ctx context.Context) ([]models.Customer, error) {
 	var customers []models.Customer
 
-	rows, err := db.Pool.Query(ctx, "SELECT * FROM customers where active = true")
+	rows, err := c.dbPool.Query(ctx, "SELECT * FROM customers where active = true")
 
 	defer rows.Close()
 
@@ -107,13 +115,13 @@ func (c *CustomerRepository) GetAllActivated(ctx context.Context) ([]models.Cust
 }
 
 func (c *CustomerRepository) Activate(ctx context.Context, id int64) error {
-	_, err := db.Pool.Exec(ctx, "UPDATE customers SET active = true WHERE id = $1", id)
+	_, err := c.dbPool.Exec(ctx, "UPDATE customers SET active = true WHERE id = $1", id)
 
 	return err
 }
 
 func (c *CustomerRepository) Deactivate(ctx context.Context, id int64) error {
-	_, err := db.Pool.Exec(ctx, "UPDATE customers SET active = false WHERE id = $1", id)
+	_, err := c.dbPool.Exec(ctx, "UPDATE customers SET active = false WHERE id = $1", id)
 
 	return err
 }
